@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Router, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Router, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 
 // Overview Pages
@@ -45,10 +45,15 @@ const App = () => (
         <AppLayout>
           <Routes>
             {/* Overview Routes */}
-            <Route path="/" element={<Analytics />} />
+            <Route path="/" element={<SummaryTab />} />
             <Route path="/overview/analytics" element={<Analytics />} />
+
+            {/* Analytics parent route */}
             <Route path="/analytics" element={<Analytics />}>
-              {/* Nested routes for tabs */}
+              {/* Default child route */}
+              <Route index element={<Navigate to="summary" replace />} />
+
+              {/* Child tab routes */}
               <Route path="summary" element={<SummaryTab />} />
               <Route path="governance" element={<GovernanceTab />} />
               <Route path="risk" element={<RiskTab />} />
@@ -70,8 +75,6 @@ const App = () => (
             <Route path="/catalog/mappings" element={<Mappings />} />
             <Route path="/catalog/risk-matrices" element={<RiskMatrices />} />
 
-
-
             {/* Assets Routes */}
             <Route path="/assets/assets" element={<Assets />} />
             <Route path="/assets/list" element={<Assets />} />
@@ -83,7 +86,7 @@ const App = () => (
             {/* Compliance Routes */}
             <Route path="/compliance/evidences" element={<Evidences />} />
 
-            {/* Placeholder routes for remaining modules */}
+            {/* Placeholder routes */}
             <Route path="/catalog/*" element={<div className="p-6"><h1 className="text-2xl font-bold">Catalog Module - Coming Soon</h1></div>} />
             <Route path="/assets/*" element={<div className="p-6"><h1 className="text-2xl font-bold">Assets Management Module - Coming Soon</h1></div>} />
             <Route path="/operations/*" element={<div className="p-6"><h1 className="text-2xl font-bold">Operations Module - Coming Soon</h1></div>} />
@@ -97,6 +100,7 @@ const App = () => (
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+
         </AppLayout>
       </BrowserRouter>
     </TooltipProvider>
