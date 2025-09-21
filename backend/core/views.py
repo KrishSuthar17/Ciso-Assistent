@@ -1,53 +1,89 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Risk,Control,Asset
-from .serializers import ControlSerializer, AssetSerializer, RiskSerializer
 from rest_framework import viewsets
+from django.db.models import Sum
+
+from .models import Risk, Control, Asset, Audit
+from .serializers import RiskSerializer, ControlSerializer, AssetSerializer, AuditSerializer
 
 
+# --- CRUD APIs (DRF ViewSets handle add/edit/delete/list) ---
 class RiskViewSet(viewsets.ModelViewSet):
     queryset = Risk.objects.all()
     serializer_class = RiskSerializer
+
 
 class ControlViewSet(viewsets.ModelViewSet):
     queryset = Control.objects.all()
     serializer_class = ControlSerializer
 
+
 class AssetViewSet(viewsets.ModelViewSet):
     queryset = Asset.objects.all()
     serializer_class = AssetSerializer
 
-from .models import Risk, Control, Asset
 
+class AuditViewSet(viewsets.ModelViewSet):
+    queryset = Audit.objects.all()
+    serializer_class = AuditSerializer
+
+
+# --- Custom API for Dashboard Overview ---
 @api_view(['GET'])
 def dashboard_overview(request):
-    total_controls = Control.objects.count()
-    completed_controls = Control.objects.filter(status="Complete").count()
-
-    total_risks = Risk.objects.count()
-    completed_risks = Risk.objects.filter(status="Complete").count()
-    active_risks = Risk.objects.filter(status="Active").count()
-
-    total_assets = Asset.objects.count()
-    critical_assets = Asset.objects.filter(critical=True).count()
+    controls = Control.objects.all()
+    audits = Audit.objects.order_by('-last_status')  # use last_status instead of updated_at
+    risks = Risk.objects.all()
 
     data = {
-        "total_controls": total_controls,
-        "completed_controls": completed_controls,
-        "total_risks": total_risks,
-        "active_risks": active_risks,
-        "completed_risks": completed_risks,
-        "total_assets": total_assets,
-        "critical_assets": critical_assets,
-        # Simple example for "last month diff" (for demo we just put random/static numbers, 
-        # later we can implement timestamp filtering)
-        "diff": {
-            "controls": +12,
-            "risks": -5,
-            "completed": +23,
-            "assets": +7
-        }
+        "controls": {
+            "total": controls.count(),
+            "active": controls.filter(status="active").count(),
+            "deprecated": controls.filter(status="deprecated").count(),
+            "todo": controls.filter(status="todo").count(),
+            "in_progress": controls.filter(status="in progress").count(),
+            "on_hold": controls.filter(status="on hold").count(),
+            "pending_p1": controls.filter(priority="P1").count(),
+            "missed_eta": controls.filter(status="missed").count(),
+        },
+        "audits": [
+            {
+                "name": audit.name,
+                "notAssessed": audit.not_assessed,
+                "partial": audit.partial,
+                "nonCompliant": audit.non_compliant,
+                "compliant": audit.compliant,
+                "notApplicable": audit.not_applicable,
+            }
+            for audit in audits.order_by("-updated_at")[:5]
+        ],
+        "compliance": {
+            "frameworks": 4,
+            "active_audits": f"0/{audits.count()}",
+            "progress": "68%",
+            "non_compliant_items": 42,
+            "evidences": 5,
+        },
+        "risks": {
+            "assessments": risks.count(),
+            "accepted": risks.aggregate(total=Sum("risk_accepted"))["total"] or 0,
+            "scenarios": risks.aggregate(total=Sum("risk_scenarios"))["total"] or 0,
+            "mapped_threats": risks.aggregate(total=Sum("risk_mapped_threats"))["total"] or 0,
+        },
+        "charts": {
+            "current_risks": [
+                {"name": "High", "value": 3, "color": "#f87171"},
+                {"name": "Medium", "value": 5, "color": "#facc15"},
+                {"name": "Low", "value": 7, "color": "#4ade80"},
+            ],
+            "residual_risks": [
+                {"name": "High", "value": 2, "color": "#f87171"},
+                {"name": "Medium", "value": 6, "color": "#facc15"},
+                {"name": "Low", "value": 10, "color": "#4ade80"},
+            ],
+        },
     }
+
     return Response(data)
 
 
@@ -55,9 +91,24 @@ def dashboard_overview(request):
 
 
 
-@api_view(['GET'])
-def risk_list(request):
-    risks = Risk.objects.all()
-    serializer = RiskSerializer(risks, many=True)
-    return Response(serializer.data)
 
+# ###################################################################################################################3
+#                                                 wait bhai
+
+
+
+
+
+# @api_view(['GET'])
+# def control_summary(request):
+#     data = {
+#         "total_controls": Control.objects.count(),
+#         "controls_active": Control.objects.filter(status="Active").count(),
+#         "controls_deprecated": Control.objects.filter(status="Deprecated").count(),
+#         "controls_todo": Control.objects.filter(status="To Do").count(),
+#         "controls_in_progress": Control.objects.filter(status="In Progress").count(),
+#         "controls_on_hold": Control.objects.filter(status="On Hold").count(),
+#         "controls_pending_p1": Control.objects.filter(status="Pending P1").count(),
+#         "controls_missed_eta": Control.objects.filter(status="Missed ETA").count(),
+#     }
+#     return Response(data)
