@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Control, Asset, Risk, Audit
+from .models import Control, Asset, Risk, Audit, Domain
 
 class ControlSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,4 +19,11 @@ class RiskSerializer(serializers.ModelSerializer):
 class AuditSerializer(serializers.ModelSerializer):
     class Meta:
         model = Audit
+        fields = '__all__'
+
+
+# organization serializer
+class DomainSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Domain
         fields = '__all__'

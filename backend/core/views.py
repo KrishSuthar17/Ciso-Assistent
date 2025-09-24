@@ -2,9 +2,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import viewsets
 from django.db.models import Sum
+from .models import Risk, Control, Asset, Audit, Domain
 
-from .models import Risk, Control, Asset, Audit
-from .serializers import RiskSerializer, ControlSerializer, AssetSerializer, AuditSerializer
+from .serializers import RiskSerializer, ControlSerializer, AssetSerializer, AuditSerializer, DomainSerializer
 
 
 # --- CRUD APIs (DRF ViewSets handle add/edit/delete/list) ---
@@ -26,6 +26,14 @@ class AssetViewSet(viewsets.ModelViewSet):
 class AuditViewSet(viewsets.ModelViewSet):
     queryset = Audit.objects.all()
     serializer_class = AuditSerializer
+
+
+# organization
+
+class DomainViewSet(viewsets.ModelViewSet):
+    queryset = Domain.objects.all()
+    serializer_class = DomainSerializer
+
 
 
 # --- Custom API for Dashboard Overview ---
@@ -88,27 +96,5 @@ def dashboard_overview(request):
 
 
 
-
-
-
-
-# ###################################################################################################################3
-#                                                 wait bhai
-
-
-
-
-
-# @api_view(['GET'])
-# def control_summary(request):
-#     data = {
-#         "total_controls": Control.objects.count(),
-#         "controls_active": Control.objects.filter(status="Active").count(),
-#         "controls_deprecated": Control.objects.filter(status="Deprecated").count(),
-#         "controls_todo": Control.objects.filter(status="To Do").count(),
-#         "controls_in_progress": Control.objects.filter(status="In Progress").count(),
-#         "controls_on_hold": Control.objects.filter(status="On Hold").count(),
-#         "controls_pending_p1": Control.objects.filter(status="Pending P1").count(),
-#         "controls_missed_eta": Control.objects.filter(status="Missed ETA").count(),
-#     }
-#     return Response(data)
+# organization 
+# @api_view(['Get'])
