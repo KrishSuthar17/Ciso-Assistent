@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from "react-router-dom";
+
 
 import {
     Card,
@@ -25,14 +26,6 @@ import {
 } from "recharts";
 
 
-
-const auditsData = [
-    { name: "CSF baseline", notAssessed: 23, partial: 18, nonCompliant: 15, compliant: 31, notApplicable: 13 },
-    { name: "GDPR review", notAssessed: 5, partial: 26, nonCompliant: 16, compliant: 37, notApplicable: 16 },
-    { name: "ISO 27002 SOA", notAssessed: 1, partial: 37, nonCompliant: 19, compliant: 32, notApplicable: 11 },
-    { name: "Quick start audit", notAssessed: 100 },
-];
-
 const controlData = [
     { subject: "Govern", value: 120 },
     { subject: "Identify", value: 80 },
@@ -43,33 +36,103 @@ const controlData = [
     { subject: "(undefined)", value: 10 },
 ];
 
-const gaugeData = [
-    { name: "Very Low", value: 20, color: "#bbf7d0" },
-    { name: "Low", value: 20, color: "#86efac" },
-    { name: "Medium", value: 20, color: "#fde047" },
-    { name: "High", value: 20, color: "#f97316" },
-];
+
 
 const Summary = () => {
-
+    const [data, setData] = useState<any>(null);
     const [activeCurrent, setActiveCurrent] = useState<number | null>(null);
     const [activeResidual, setActiveResidual] = useState<number | null>(null);
+
+    // dynamic data 
+    const [controls, setControls] = useState<any[]>([]);
+    const [Asset, setAssets] = useState<any[]>([]);
+    const [risks, setRisks] = useState<any[]>([]);
+
+
+
+    useEffect(() => {
+        fetch("http://127.0.0.1:8000/api/dashboard/")
+            .then((res) => res.json())
+            .then((json) => setData(json))
+            .catch((err) => console.error(err));
+    }, []);
+
+
+
+    if (!data) return <p>Loading...</p>;
+
+    // Controls summary cards
+    const controlsSummary = [
+        { label: "Total Controls", value: data.controls.total },
+        { label: "Active", value: data.controls.active },
+        { label: "Deprecated", value: data.controls.deprecated },
+        { label: "To Do", value: data.controls.todo },
+        { label: "In Progress", value: data.controls.in_progress },
+        { label: "On Hold", value: data.controls.on_hold },
+        { label: "Pending P1", value: data.controls.pending_p1 },
+        { label: "Missed ETA", value: data.controls.missed_eta },
+    ];
+
+    // Compliance cards
+    const complianceCards = [
+        { label: "Used Frameworks", value: data.compliance.frameworks },
+        { label: "Active Audits", value: data.compliance.active_audits },
+        { label: "Average Progress", value: data.compliance.progress },
+        { label: "Non Compliant Items", value: data.compliance.non_compliant_items },
+        { label: "Evidences", value: data.compliance.evidences },
+    ];
+
+    // Risk cards
+    // Risk cards dynamically
+    const riskCards = [
+        { label: "Assessments", value: data.risks.assessments },
+        { label: "Scenarios", value: data.risks.scenarios },
+        { label: "Mapped Threats", value: data.risks.mapped_threats },
+        { label: "Risk Accepted", value: data.risks.accepted },
+    ];
+
+    // Current Risks
+    const currentRisksData = data.charts.current_risks.map((risk: any) => ({
+        name: risk.name,
+        value: risk.value,
+        color: risk.color,
+    }));
+
+    // Residual Risks
+    const residualRisksData = data.charts.residual_risks.map((risk: any) => ({
+        name: risk.name,
+        value: risk.value,
+        color: risk.color,
+    }));
+
+
+    // Radar chart for controls
+    const controlData = Object.entries(data.controls)
+        .filter(([key, _]) =>
+            ["total", "active", "deprecated", "todo", "in_progress", "on_hold", "pending_p1", "missed_eta"].includes(key)
+        )
+        .map(([key, value]) => ({ subject: key.replace("_", " ").toUpperCase(), value }));
+
+    // Assets bar chart (if needed from audits)
+    const assetsData = data.audits.map((audit: any) => ({
+        name: audit.name,
+        type: audit.notAssessed ? "Not Assessed" : audit.partial ? "Partial" : "Other",
+    }));
+
+    // Pie chart data for risks
+    const gaugeData = [
+        { name: "Low", value: data.charts.current_risks.find((r: any) => r.name === "Low")?.value || 0, color: "#4ade80" },
+        { name: "Medium", value: data.charts.current_risks.find((r: any) => r.name === "Medium")?.value || 0, color: "#facc15" },
+        { name: "High", value: data.charts.current_risks.find((r: any) => r.name === "High")?.value || 0, color: "#f87171" },
+    ];
+
 
     return (
         <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Controls Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                        { label: "Total Controls", value: 42 },
-                        { label: "Active", value: 3 },
-                        { label: "Deprecated", value: 1 },
-                        { label: "To Do", value: 1 },
-                        { label: "In Progress", value: 5 },
-                        { label: "On Hold", value: 0 },
-                        { label: "Pending P1", value: 1 },
-                        { label: "Missed ETA", value: 5 },
-                    ].map((card, i) => (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    {controlsSummary.map((card, i) => (
                         <Card key={i}>
                             <CardContent className="p-4">
                                 <p className="text-purple-600 text-xs uppercase">Controls</p>
@@ -80,25 +143,21 @@ const Summary = () => {
                     ))}
                 </div>
 
+
                 {/* Radar Chart */}
-                <Card className="flex items-center justify-center">
+                <Card className="mb-6 flex items-center justify-center">
                     <CardContent className="w-full h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <RadarChart outerRadius={120} data={controlData}>
                                 <PolarGrid />
                                 <PolarAngleAxis dataKey="subject" />
                                 <Tooltip />
-                                <Radar
-                                    name="Controls"
-                                    dataKey="value"
-                                    stroke="#8b5cf6"
-                                    fill="#8b5cf6"
-                                    fillOpacity={0.6}
-                                />
+                                <Radar name="Controls" dataKey="value" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
                             </RadarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
+
             </div>
 
 
@@ -106,43 +165,25 @@ const Summary = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="col-span-2">
                     <CardHeader>
-                        <CardTitle>Recently updated audits</CardTitle>
+                        <CardTitle>Assets Overview</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={200}>
-                            <BarChart data={auditsData} layout="vertical">
+                            <BarChart data={assetsData} layout="vertical">
                                 <XAxis type="number" hide />
                                 <YAxis type="category" dataKey="name" />
                                 <Tooltip />
-                                <Bar dataKey="notAssessed" stackId="a" fill="#cbd5e1" />
-                                <Bar dataKey="partial" stackId="a" fill="#38bdf8" />
-                                <Bar dataKey="nonCompliant" stackId="a" fill="#f87171" />
-                                <Bar dataKey="compliant" stackId="a" fill="#4ade80" />
-                                <Bar dataKey="notApplicable" stackId="a" fill="#e5e5e5" />
+                                <Bar dataKey="type" fill="#38bdf8" />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mt-6">
-                    {[
-                        { label: "Used Frameworks", value: 4 },
-                        { label: "Active Audits", value: "0/4" },
-                        { label: "Average Progress", value: "68%" },
-                        { label: "Non Compliant Items", value: 42 },
-                        { label: "Evidences", value: 5 },
-                    ].map((card, i) => (
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mt-6 mb-6">
+                    {complianceCards.map((card, i) => (
                         <Card key={i}>
                             <CardContent className="p-4">
-                                <p className="text-purple-600 text-xs uppercase">
-                                    {card.label.includes("Frameworks") ||
-                                        card.label.includes("Audits") ||
-                                        card.label.includes("Progress") ||
-                                        card.label.includes("Items") ||
-                                        card.label.includes("Evidences")
-                                        ? "Compliance"
-                                        : "Risk"}
-                                </p>
+                                <p className="text-purple-600 text-xs uppercase">Compliance</p>
                                 <h3 className="text-2xl font-bold">{card.value}</h3>
                                 <p className="text-gray-500">{card.label}</p>
                             </CardContent>
@@ -151,6 +192,7 @@ const Summary = () => {
                 </div>
             </div>
 
+            {/* Gauges Section */}
             {/* Gauges Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                 {/* Current Risks */}
@@ -162,7 +204,7 @@ const Summary = () => {
                         <ResponsiveContainer width="100%" height={200}>
                             <PieChart>
                                 <Pie
-                                    data={gaugeData}
+                                    data={currentRisksData}
                                     cx="50%"
                                     cy="100%"
                                     startAngle={180}
@@ -174,7 +216,7 @@ const Summary = () => {
                                     onMouseEnter={(_, index) => setActiveCurrent(index)}
                                     onMouseLeave={() => setActiveCurrent(null)}
                                 >
-                                    {gaugeData.map((entry, index) => (
+                                    {currentRisksData.map((entry, index) => (
                                         <Cell
                                             key={`cell-current-${index}`}
                                             fill={entry.color}
@@ -185,8 +227,8 @@ const Summary = () => {
                                 </Pie>
                                 <Tooltip
                                     formatter={(value, name) => [
-                                        `${value}`,
-                                        `${activeCurrent !== null ? gaugeData[activeCurrent].name : name}`,
+                                        value,
+                                        activeCurrent !== null ? currentRisksData[activeCurrent].name : name,
                                     ]}
                                 />
                             </PieChart>
@@ -195,22 +237,23 @@ const Summary = () => {
                 </Card>
 
                 {/* Middle Risk Info Cards */}
-                <div className="grid grid-cols-2 gap-4">
-                    {[
-                        { label: "Assessments", value: 3 },
-                        { label: "Scenarios", value: 8 },
-                        { label: "Mapped Threats", value: 7 },
-                        { label: "Risk Accepted", value: 0 },
-                    ].map((card, i) => (
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                    {riskCards.map((card, i) => (
                         <Card key={i}>
                             <CardContent className="p-4">
                                 <p className="text-purple-600 text-xs uppercase">Risk</p>
-                                <h3 className="text-2xl font-bold">{card.value}</h3>
+                                <h3 className="text-2xl font-bold">
+                                    {typeof card.value === "number" ? card.value : "N/A"}
+                                </h3>
                                 <p className="text-gray-500">{card.label}</p>
                             </CardContent>
                         </Card>
                     ))}
                 </div>
+
+
+
+
 
                 {/* Residual Risks */}
                 <Card>
@@ -221,7 +264,7 @@ const Summary = () => {
                         <ResponsiveContainer width="100%" height={200}>
                             <PieChart>
                                 <Pie
-                                    data={gaugeData}
+                                    data={residualRisksData}
                                     cx="50%"
                                     cy="100%"
                                     startAngle={180}
@@ -233,7 +276,7 @@ const Summary = () => {
                                     onMouseEnter={(_, index) => setActiveResidual(index)}
                                     onMouseLeave={() => setActiveResidual(null)}
                                 >
-                                    {gaugeData.map((entry, index) => (
+                                    {residualRisksData.map((entry, index) => (
                                         <Cell
                                             key={`cell-residual-${index}`}
                                             fill={entry.color}
@@ -244,8 +287,8 @@ const Summary = () => {
                                 </Pie>
                                 <Tooltip
                                     formatter={(value, name) => [
-                                        `${value}`,
-                                        `${activeResidual !== null ? gaugeData[activeResidual].name : name}`,
+                                        value,
+                                        activeResidual !== null ? residualRisksData[activeResidual].name : name,
                                     ]}
                                 />
                             </PieChart>

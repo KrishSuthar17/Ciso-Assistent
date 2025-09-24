@@ -370,7 +370,7 @@ const GovernanceDashboard = () => {
                                 <tbody className="bg-white">
                                     <tr>
                                         <td
-                                            colSpan="7"
+                                            colSpan={7}
                                             className="px-6 py-8 text-center text-gray-500"
                                         >
                                             No items to review
@@ -420,7 +420,7 @@ const GovernanceDashboard = () => {
                                 <tbody className="bg-white">
                                     <tr>
                                         <td
-                                            colSpan="4"
+                                            colSpan={4}
                                             className="px-6 py-8 text-center text-gray-500"
                                         >
                                             No acceptances to review
