@@ -127,3 +127,23 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# REST framework settings
+
+# REST_FRAMEWORK = {
+#     "DEFAULT_AUTHENTICATION_CLASSES": [
+#         "rest_framework.authentication.SessionAuthentication",
+#         "rest_framework.authentication.TokenAuthentication",
+#     ],
+#     "DEFAULT_PERMISSION_CLASSES": [
+#         "rest_framework.permissions.IsAuthenticated",
+#     ],
+# }
+# # Custom user model
+# # Login redirect URL
+# LOGIN_REDIRECT_URL = "/"
+# # Login URL 
+# LOGIN_URL = "/login/"
+# # Logout redirect URL
+# LOGOUT_REDIRECT_URL = "/login/"

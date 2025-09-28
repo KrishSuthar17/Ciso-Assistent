@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -19,117 +19,130 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Building2, Users, MoreHorizontal } from "lucide-react";
+import { Plus, Search, Shield, MoreHorizontal } from "lucide-react";
+import axios from "axios";
 
-// 🔹 Replace with your backend API URL
-const API_URL = "http://127.0.0.1:8000/api/Domain/";
-
+const API_URL = "http://127.0.0.1:8000/api/domains/";
 export default function Domains() {
-  const [domains, setDomains] = useState([]);
+  const [domainList, setDomainList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   // form state
-  const [newDomainName, setNewDomainName] = useState("");
-  const [newDomainDescription, setNewDomainDescription] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    status: "design",
+    domain: "",
+    default_asigned: false,
+  });
 
-  // 🔹 Fetch domains from backend
+  // 🔹 Fetch Domains from backend
   useEffect(() => {
-    fetch(API_URL)
-      .then((res) => res.json())
-      .then((data) => {
-        // adapt based on backend response
-        if (Array.isArray(data)) {
-          setDomains(data);
-        } else if (data.domains) {
-          setDomains(data.domains);
-        } else {
-          console.error("Unexpected API response:", data);
-        }
-      })
-      .catch((err) => console.error("Error fetching domains:", err));
+    axios.get(API_URL).then((res) => setDomainList(res.data));
   }, []);
 
   // 🔹 Handle Add Domain (POST)
   const handleAddDomain = async () => {
-    const newDomain = {
-      name: newDomainName,
-      description: newDomainDescription,
-      status: "active",
-      assetCount: 0,
-      userCount: 0,
-    };
-
     try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newDomain),
+      const res = await axios.post(API_URL, formData);
+      setDomainList((prev) => [...prev, res.data]); // update UI
+      setIsAddDialogOpen(false);
+      setFormData({
+        name: "",
+        description: "",
+        status: "design",
+        domain: "",
+        default_asigned: false,
       });
-
-      if (res.ok) {
-        const savedDomain = await res.json();
-        setDomains((prev) => [...prev, savedDomain]); // update UI
-        setIsAddDialogOpen(false);
-        setNewDomainName("");
-        setNewDomainDescription("");
-      } else {
-        console.error("Failed to create domain");
-      }
     } catch (err) {
-      console.error("Error creating domain:", err);
+      console.error("Error adding perimeter:", err);
     }
   };
 
-  // 🔹 Filter for search
-  const filteredDomains = domains.filter(
-    (domain) =>
-      domain.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      domain.description.toLowerCase().includes(searchTerm.toLowerCase())
+  // 🔹 Filter domains
+  const filteredDomains = domainList.filter(
+    (d) =>
+      d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Domains</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Domain</h1>
           <p className="text-muted-foreground">
-            Organize your organization into business domains
+            Manage your organization’s Domain
           </p>
         </div>
+
+        {/* 🔹 Add Perimeter Dialog */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Domain
+              <Plus className="mr-2 h-4 w-4" /> Add Perimeter
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Domain</DialogTitle>
+              <DialogTitle>Add New Perimeter</DialogTitle>
               <DialogDescription>
-                Create a new business domain for your organization
+                Create a new perimeter linked to a domain
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Domain Name</Label>
+                <Label htmlFor="name">Perimeter Name</Label>
                 <Input
                   id="name"
-                  placeholder="Enter domain name"
-                  value={newDomainName}
-                  onChange={(e) => setNewDomainName(e.target.value)}
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
-                  placeholder="Enter domain description"
-                  value={newDomainDescription}
-                  onChange={(e) => setNewDomainDescription(e.target.value)}
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                 />
               </div>
+
+
+
+              {/* <div className="space-y-2">
+                <Label htmlFor="domain">Domain ID</Label>
+                <Input
+                  id="domain"
+                  type="number"
+                  value={formData.domain}
+                  onChange={(e) =>
+                    setFormData({ ...formData, domain: e.target.value })
+                  }
+                />
+              </div> */}
+
+              {/* <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="default_asigned"
+                  checked={formData.default_asigned}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      default_asigned: e.target.checked,
+                    })
+                  }
+                />
+                <Label htmlFor="default_asigned">Default Assigned</Label>
+              </div> */}
+
               <div className="flex justify-end gap-2">
                 <Button
                   variant="outline"
@@ -149,7 +162,7 @@ export default function Domains() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search domains..."
+            placeholder="Search perimeters..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -160,11 +173,11 @@ export default function Domains() {
       {/* Domains Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredDomains.map((domain) => (
-          <Card key={domain.id || domain.name} className="relative group">
+          <Card key={domain.id} className="relative group">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-primary" />
+                  <Shield className="h-5 w-5 text-primary" />
                   <CardTitle className="text-lg">{domain.name}</CardTitle>
                 </div>
                 <Button
@@ -177,32 +190,36 @@ export default function Domains() {
               </div>
               <CardDescription>{domain.description}</CardDescription>
             </CardHeader>
-            <CardContent>
+
+            {/* <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Assets
-                    </span>
-                  </div>
+                  <span className="text-sm text-muted-foreground">Domain</span>
+                  <Badge variant="outline">{domain.domain}</Badge>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Assigned</span>
                   <Badge variant="secondary">
-                    {domain.assetCount || 0}
+                    {domain.default_asigned ? "Yes" : "No"}
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Users</span>
-                  </div>
-                  <Badge variant="secondary">{domain.userCount || 0}</Badge>
-                </div>
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Status</span>
-                  <Badge variant="default">{domain.status || "active"}</Badge>
+                  <Badge variant="default">{domain.status}</Badge>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Created</span>
+                  <span className="text-xs text-muted-foreground">
+                    {domain.created_at
+                      ? new Date(domain.created_at).toLocaleDateString()
+                      : "-"}
+                  </span>
                 </div>
               </div>
-            </CardContent>
+            </CardContent> */}
           </Card>
         ))}
       </div>

@@ -1,18 +1,32 @@
 // src/pages/GovernanceDashboard.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { Chart } from "chart.js/auto";
+import axios from "axios";
 
 const GovernanceDashboard = () => {
     const [activeTab, setActiveTab] = useState("Governance");
     const barChart1Ref = useRef(null);
     const barChart2Ref = useRef(null);
     const donutChartRef = useRef(null);
+    const [domain, setdomain] = useState([]);
+    const [Perimeter, setPerimeter] = useState([]);
 
+    useEffect(() => {
+        const domains = axios.get('http://127.0.0.1:8000/api/domains/')
+            .then((response) => {
+                setdomain(response.data)
+                // console.log(response.data)
+            })
+        const Perimeter = axios.get('http://127.0.0.1:8000/api/perimeters/')
+            .then((res) => {
+                setPerimeter(res.data)
 
+            })
+    }, []);
 
     const statisticsData = [
-        { label: "Domains", value: 4, icon: "🌐" },
-        { label: "Perimeters", value: 6, icon: "👥" },
+        { label: "Domains", value: domain.length, icon: "🌐" },
+        { label: "Perimeters", value: Perimeter.length, icon: "👥" },
         { label: "Applied controls", value: 42, icon: "🛡️" },
         { label: "Risk assessments", value: 3, icon: "🔍" },
         { label: "Audits", value: 4, icon: "⚙️" },

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Risk, Asset, Audit, Control, Domain
+from .models import Risk, Asset, Audit, Control, Domain, perimeter, User
 
 @admin.register(Risk)
 class RiskAdmin(admin.ModelAdmin):
@@ -28,3 +28,14 @@ class ControlAdmin(admin.ModelAdmin):
 class DomainAdmin(admin.ModelAdmin):
     list_display=('name','description')
     search_fields=("name",)
+
+@admin.register(perimeter)
+class perimeterAdmin(admin.ModelAdmin):
+    list_display=('name','description')
+    search_fields=("name",)
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('Full_name', 'Email', 'Role', 'Department', 'is_active', 'created_at', 'updated_at')
+    search_fields = ('Full_name', 'Email', 'Role', 'Department')
+

@@ -2,9 +2,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import viewsets
 from django.db.models import Sum
-from .models import Risk, Control, Asset, Audit, Domain
+from .models import Risk, Control, Asset, Audit, Domain, perimeter, User
 
-from .serializers import RiskSerializer, ControlSerializer, AssetSerializer, AuditSerializer, DomainSerializer
+from .serializers import PerimeterSerializer, RiskSerializer, ControlSerializer, AssetSerializer, AuditSerializer, DomainSerializer, UserSerializer
 
 
 # --- CRUD APIs (DRF ViewSets handle add/edit/delete/list) ---
@@ -34,6 +34,14 @@ class DomainViewSet(viewsets.ModelViewSet):
     queryset = Domain.objects.all()
     serializer_class = DomainSerializer
 
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class PerimeterViewSet(viewsets.ModelViewSet):
+    queryset = perimeter.objects.all()
+    serializer_class = PerimeterSerializer
 
 
 # --- Custom API for Dashboard Overview ---

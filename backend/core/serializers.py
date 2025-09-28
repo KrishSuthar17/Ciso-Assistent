@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Control, Asset, Risk, Audit, Domain
+from .models import Control, Asset, Risk, Audit, Domain, perimeter, User
 
 class ControlSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,4 +26,14 @@ class AuditSerializer(serializers.ModelSerializer):
 class DomainSerializer(serializers.ModelSerializer):
     class Meta:
         model = Domain
+        fields = '__all__'
+
+class PerimeterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = perimeter
+        fields = '__all__'
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
         fields = '__all__'

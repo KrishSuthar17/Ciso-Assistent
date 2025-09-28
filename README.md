@@ -1,3 +1,18 @@
+
+
+
+
+
+#                    i change the code in model, views ans also in urls why pie chats not rendering 
+
+
+
+
+
+
+
+
+
 # 🚀 Ciso-Assistent
 
 A full-stack project with modern frontend and powerful Django backend.  

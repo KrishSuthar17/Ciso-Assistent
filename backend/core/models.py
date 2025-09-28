@@ -98,3 +98,53 @@ class Domain(models.Model):
 
     def __str__(self):
         return self.name
+
+class perimeter(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True,null=True)
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE, related_name='perimeters')
+
+    id = models.AutoField(primary_key=True) # auto increment the id
+    
+    status = models.CharField(max_length=50, 
+    choices=[
+        ('design','design'),
+        ('development','development'),
+        ('production','production'),
+        ('End of life','End of life'),
+        ('Dropped','Dropped')
+        ])
+                        
+    # default_asigned = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='default_perimeter')
+    default_asigned = models.ForeignKey(
+    'core.User',   # <-- string reference with app name
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name='default_perimeter')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+
+# get data from forigen key for a department and may be role also
+
+class User(models.Model):
+    Full_name = models.CharField(max_length=255)
+    Email = models.EmailField(unique=True)
+    Role = models.CharField(max_length=100, choices=[
+        ('Creater','Creater'),
+        ('Reviewer','Reviewer'),
+        ('Approver','Approver'),
+        ('Admin','Admin')],default='Creator')
+    
+    Department = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.Full_name
