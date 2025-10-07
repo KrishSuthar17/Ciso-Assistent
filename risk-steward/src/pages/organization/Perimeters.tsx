@@ -22,9 +22,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Shield, MoreHorizontal } from "lucide-react";
 import axios from "axios";
 
-// ✅ setup axios instance
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
+  baseURL: "http://127.0.0.1:8000/api/",
   headers: { "Content-Type": "application/json" },
 });
 
@@ -33,6 +32,7 @@ export default function Perimeters() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [perimeterList, setPerimeterList] = useState([]);
   const [menuOpenId, setMenuOpenId] = useState(null);
+  const [domains, setDomains] = useState([]);
   const menuRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -40,10 +40,10 @@ export default function Perimeters() {
     description: "",
     status: "design",
     domain: "",
-    default_asigned: false,
+    default_assigned: false,
   });
 
-  // ✅ Fetch perimeters on mount
+  // ✅ Fetch Perimeters
   useEffect(() => {
     const fetchPerimeters = async () => {
       try {
@@ -54,11 +54,18 @@ export default function Perimeters() {
       }
     };
     fetchPerimeters();
+
+    axios
+      .get("http://127.0.0.1:8000/api/domains/") // domains 
+      .then((res) => setDomains(res.data))
+      .catch((err) => console.error("Error fetching domains:", err));
   }, []);
 
   // ✅ Add Perimeter
   const handleAddPerimeter = async () => {
     try {
+      if (!formData.name.trim()) return alert("Perimeter name is required.");
+
       const payload = {
         ...formData,
         domain: formData.domain ? parseInt(formData.domain, 10) : null,
@@ -67,49 +74,58 @@ export default function Perimeters() {
       const res = await api.post("/perimeters/", payload);
       setPerimeterList((prev) => [...prev, res.data]);
       setIsAddDialogOpen(false);
-      setFormData({
-        name: "",
-        description: "",
-        status: "design",
-        domain: "",
-        default_asigned: false,
-      });
+      resetForm();
     } catch (err) {
       console.error("Error creating perimeter:", err.response?.data || err.message);
+      alert("Failed to create perimeter. Check console for details.");
     }
   };
 
-  // ✅ Filtering perimeters
-  const filteredPerimeters = perimeterList.filter((perimeter) =>
-    (perimeter.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (perimeter.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      status: "design",
+      domain: "",
+      default_assigned: false,
+    });
+  };
+
+  // ✅ Filter perimeters by name or description
+  const filteredPerimeters = perimeterList.filter(
+    (p) =>
+      (p.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ✅ handle navigation
+  // ✅ Navigation helper
   const goTo = (path) => {
     window.location.href = path;
   };
 
-  // ✅ close menu when clicking outside
+  // ✅ Close menu on outside click
   useEffect(() => {
-    const onDocClick = (e) => {
+    const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpenId(null);
       }
     };
-    document.addEventListener("click", onDocClick);
-    return () => document.removeEventListener("click", onDocClick);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Perimeters</h1>
-          <p className="text-muted-foreground">Define and manage security perimeters</p>
+          <p className="text-muted-foreground">
+            Define and manage security perimeters
+          </p>
         </div>
 
-        {/* Add Perimeter Button + Popup */}
+        {/* Add Dialog */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -121,15 +137,16 @@ export default function Perimeters() {
             <DialogHeader>
               <DialogTitle>Add Perimeter</DialogTitle>
               <DialogDescription>
-                Fill the form to create a new perimeter.
+                Fill out the form to create a new perimeter.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Perimeter Name</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
+                  placeholder="Enter perimeter name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
@@ -139,8 +156,44 @@ export default function Perimeters() {
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
+                  placeholder="Describe this perimeter"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="domain">Select Domain</Label>
+                <select
+                  id="domain"
+                  value={formData.domain}
+                  onChange={(e) =>
+                    setFormData({ ...formData, domain: e.target.value })
+                  }
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="">-- Select Domain --</option>
+                  {domains.map((domain: any) => (
+                    <option key={domain.id} value={domain.id}>
+                      {domain.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+
+              <div className="space-y-2">
+                <Label htmlFor="domain">Domain ID</Label>
+                <Input
+                  id="domain"
+                  type="number"
+                  placeholder="Enter linked domain ID"
+                  value={formData.domain}
+                  onChange={(e) =>
+                    setFormData({ ...formData, domain: e.target.value })
+                  }
                 />
               </div>
 
@@ -150,36 +203,34 @@ export default function Perimeters() {
                   id="status"
                   className="w-full border rounded-md p-2"
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
                 >
                   <option value="design">Design</option>
                   <option value="development">Development</option>
                   <option value="production">Production</option>
-                  <option value="End of life">End of life</option>
-                  <option value="Dropped">Dropped</option>
+                  <option value="end_of_life">End of Life</option>
+                  <option value="dropped">Dropped</option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="domain">Domain ID</Label>
-                <Input
-                  id="domain"
-                  type="number"
-                  value={formData.domain}
-                  onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="default_asigned"
-                  checked={formData.default_asigned}
+                <Label htmlFor="default_assigned">Default Assigned</Label>
+                <select
+                  id="default_assigned"
+                  className="w-full border rounded-md p-2"
+                  value={formData.default_assigned}
                   onChange={(e) =>
-                    setFormData({ ...formData, default_asigned: e.target.checked })
+                    setFormData({
+                      ...formData,
+                      default_assigned: e.target.value === "true",
+                    })
                   }
-                />
-                <Label htmlFor="default_asigned">Default Assigned</Label>
+                >
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
               </div>
 
               <div className="flex justify-end gap-2">
@@ -220,12 +271,15 @@ export default function Perimeters() {
                   <Shield className="h-5 w-5 text-primary" />
                   <CardTitle className="text-lg">{perimeter.name}</CardTitle>
                 </div>
+
                 <div className="relative" ref={menuRef} onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="opacity-0 group-hover:opacity-100"
-                    onClick={() => setMenuOpenId(menuOpenId === perimeter.id ? null : perimeter.id)}
+                    onClick={() =>
+                      setMenuOpenId(menuOpenId === perimeter.id ? null : perimeter.id)
+                    }
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
@@ -267,7 +321,7 @@ export default function Perimeters() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Assigned</span>
                   <Badge variant="secondary">
-                    {perimeter.default_asigned ? "Yes" : "No"}
+                    {perimeter.default_assigned ? "Yes" : "No"}
                   </Badge>
                 </div>
 

@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Risk, Asset, Audit, Control, Domain, perimeter, User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from .models import Risk, Asset, Audit, Control, Domain, perimeter, User, UserGroup
 
 @admin.register(Risk)
 class RiskAdmin(admin.ModelAdmin):
@@ -34,8 +35,32 @@ class perimeterAdmin(admin.ModelAdmin):
     list_display=('name','description')
     search_fields=("name",)
 
+@admin.register(UserGroup)
+class UserGroupAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'description', 'created_at', 'updated_at')
+    search_fields = ('name',)
+
+
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    list_display = ('Full_name', 'Email', 'Role', 'Department', 'is_active', 'created_at', 'updated_at')
-    search_fields = ('Full_name', 'Email', 'Role', 'Department')
+class UserAdmin(BaseUserAdmin):
+    ordering = ('email',)
+    list_display = ('id', 'email', 'first_name', 'last_name', 'is_active', 'is_staff', 'is_superuser', 'user_group')
+    search_fields = ('email', 'first_name', 'last_name')
+    readonly_fields = ('last_login', 'created_at', 'updated_at')
+
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'date_of_joining', 'expired_date', 'observation')}),
+        ('Organization', {'fields': ('user_group',)}),
+        ('Security', {'fields': ('mfa_enabled', 'exclude_from_force_sso', 'is_third_party')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Important dates', {'fields': ('last_login', 'created_at', 'updated_at')}),
+    )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2', 'is_staff', 'is_superuser', 'is_active', 'user_group'),
+        }),
+    )
 

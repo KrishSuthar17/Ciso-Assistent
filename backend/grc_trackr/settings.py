@@ -140,7 +140,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #         "rest_framework.permissions.IsAuthenticated",
 #     ],
 # }
-# # Custom user model
+# Custom user model
+AUTH_USER_MODEL = 'core.User'
 # # Login redirect URL
 # LOGIN_REDIRECT_URL = "/"
 # # Login URL 

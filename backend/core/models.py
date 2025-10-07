@@ -1,5 +1,10 @@
 # core/models.py
 from django.db import models
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    PermissionsMixin,
+    BaseUserManager,
+)
 
 class Risk(models.Model):
     risk_assessments = models.TextField(blank=True, null=True)
@@ -132,19 +137,66 @@ class perimeter(models.Model):
 
 # get data from forigen key for a department and may be role also
 
-class User(models.Model):
-    Full_name = models.CharField(max_length=255)
-    Email = models.EmailField(unique=True)
-    Role = models.CharField(max_length=100, choices=[
-        ('Creater','Creater'),
-        ('Reviewer','Reviewer'),
-        ('Approver','Approver'),
-        ('Admin','Admin')],default='Creator')
-    
-    Department = models.CharField(max_length=100)
-    is_active = models.BooleanField(default=True)
+class UserGroup(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.Full_name
+        return self.name
+
+
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Users must have an email address")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        if password:
+            user.set_password(password)
+        else:
+            # Set an unusable password if none provided
+            user.set_unusable_password()
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+        return self.create_user(email, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    date_of_joining = models.DateTimeField(blank=True, null=True)
+    user_group = models.ForeignKey(
+        UserGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name="users"
+    )
+    exclude_from_force_sso = models.BooleanField(default=False)
+    is_third_party = models.BooleanField(default=False)
+    observation = models.TextField(blank=True, null=True)
+    mfa_enabled = models.BooleanField(default=False)
+    expired_date = models.DateField(blank=True, null=True)
+
+    # is_superuser comes from PermissionsMixin
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = UserManager()
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["first_name", "last_name"]
+
+    def __str__(self):
+        return self.email
