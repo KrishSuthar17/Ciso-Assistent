@@ -36,12 +36,20 @@ export default function Perimeters() {
   const [users, setUsers] = useState([]);
   const menuRef = useRef(null);
 
-  const [formData, setFormData] = useState({
+  type FormData = {
+    name: string;
+    description: string;
+    status: string;
+    domain: string | number | null;
+    default_assigned: string | number | null;
+  };
+
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     description: "",
     status: "design",
     domain: "",
-    default_assigned: false,
+    default_assigned: "",
   });
 
   // ✅ Fetch Perimeters
@@ -72,7 +80,10 @@ export default function Perimeters() {
 
       const payload = {
         ...formData,
-        domain: formData.domain ? parseInt(formData.domain, 10) : null,
+        domain: formData.domain ? parseInt(String(formData.domain), 10) : null,
+        default_assigned: formData.default_assigned
+          ? parseInt(String(formData.default_assigned), 10)
+          : null,
       };
 
       const res = await api.post("/perimeters/", payload);
@@ -91,7 +102,7 @@ export default function Perimeters() {
       description: "",
       status: "design",
       domain: "",
-      default_assigned: false,
+      default_assigned: "",
     });
   };
 
@@ -323,14 +334,14 @@ export default function Perimeters() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Domain</span>
+                  <span className="text-sm text-muted-foreground">Domain id</span>
                   <Badge variant="outline">{perimeter.domain}</Badge>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Assigned</span>
                   <Badge variant="secondary">
-                    {perimeter.default_assigned ? "Yes" : "No"}
+                    {perimeter.default_asigned_email || "No"}
                   </Badge>
                 </div>
 
