@@ -27,12 +27,25 @@ class DomainSerializer(serializers.ModelSerializer):
     class Meta:
         model = Domain
         fields = '__all__'
+        
 
 class PerimeterSerializer(serializers.ModelSerializer):
-    default_asigned = serializers.StringRelatedField()  # shows __str__() of User
+    default_asigned = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    default_asigned_email = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = perimeter
         fields = '__all__'
+
+    def get_default_asigned_email(self, obj):
+        return obj.default_asigned.email if obj.default_asigned else None
+
+    
+
 
 class UserGroupSerializer(serializers.ModelSerializer):
     class Meta:

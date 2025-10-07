@@ -33,6 +33,7 @@ export default function Perimeters() {
   const [perimeterList, setPerimeterList] = useState([]);
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [domains, setDomains] = useState([]);
+  const [users, setUsers] = useState([]);
   const menuRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -59,6 +60,9 @@ export default function Perimeters() {
       .get("http://127.0.0.1:8000/api/domains/") // domains 
       .then((res) => setDomains(res.data))
       .catch((err) => console.error("Error fetching domains:", err));
+
+
+
   }, []);
 
   // ✅ Add Perimeter
@@ -220,18 +224,23 @@ export default function Perimeters() {
                 <select
                   id="default_assigned"
                   className="w-full border rounded-md p-2"
-                  value={formData.default_assigned}
+                  value={formData.default_assigned || ""}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      default_assigned: e.target.value === "true",
+                      default_assigned: e.target.value, // store user id
                     })
                   }
                 >
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
+                  <option value="">Select a user</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} ({user.email})
+                    </option>
+                  ))}
                 </select>
               </div>
+
 
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>

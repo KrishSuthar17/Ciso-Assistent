@@ -32,8 +32,8 @@ class DomainAdmin(admin.ModelAdmin):
 
 @admin.register(perimeter)
 class perimeterAdmin(admin.ModelAdmin):
-    list_display=('name','description')
-    search_fields=("name",)
+    list_display = ('name', 'default_asigned', 'status')
+    search_fields = ('name', 'default_asigned__email')
 
 @admin.register(UserGroup)
 class UserGroupAdmin(admin.ModelAdmin):
