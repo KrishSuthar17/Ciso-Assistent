@@ -69,8 +69,10 @@ export default function Perimeters() {
       .then((res) => setDomains(res.data))
       .catch((err) => console.error("Error fetching domains:", err));
 
-
-
+    axios
+      .get("http://127.0.0.1:8000/api/users/") // users
+      .then((res) => setUsers(res.data))
+      .catch((err) => console.error("Error fetching users:", err));
   }, []);
 
   // ✅ Add Perimeter
@@ -81,7 +83,8 @@ export default function Perimeters() {
       const payload = {
         ...formData,
         domain: formData.domain ? parseInt(String(formData.domain), 10) : null,
-        default_assigned: formData.default_assigned
+        // backend field is named `default_asigned` (single 's') in serializers/models
+        default_asigned: formData.default_assigned
           ? parseInt(String(formData.default_assigned), 10)
           : null,
       };

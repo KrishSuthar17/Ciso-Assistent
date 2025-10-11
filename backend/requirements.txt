@@ -20,6 +20,7 @@ psycopg2-binary==2.9.10
 pycparser==2.22
 PyJWT==2.10.1
 PyYAML==6.0.2
+python-dotenv==1.0.0  # for loading .env files in settings.py
 referencing==0.36.2
 rpds-py==0.27.0
 setuptools==80.9.0

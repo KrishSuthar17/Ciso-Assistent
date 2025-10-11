@@ -10,10 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# load .env from project root
+load_dotenv(dotenv_path=BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -79,12 +86,42 @@ WSGI_APPLICATION = 'grc_trackr.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
+DB_name = os.getenv('DB_NAME')
+DB_user = os.getenv('DB_USER')
+DB_password = os.getenv('DB_PASSWORD')
+DB_host = os.getenv('DB_HOST')
+DB_port = os.getenv('DB_PORT')
+
+
+
+
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
-    }
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'postgres',
+            'USER': 'postgres',
+            'PASSWORD': '123in',
+            'HOST': 'localhost',
+            'PORT': '5431',
+            'OPTIONS':{
+                'connect_timeout': 5,
+            }
+        }
 }
+print('connection details:' , DATABASES)
+
+
+    # Fallback to a local sqlite database for development when env vars are not set
+# DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': str(BASE_DIR / 'db.sqlite3'),
+#         }
+#     }
+
+
 
 
 # Password validation
@@ -141,7 +178,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #     ],
 # }
 # Custom user model
-AUTH_USER_MODEL = 'core.User'
+AUTH_USER_MODEL = "core.User"
+
 # # Login redirect URL
 # LOGIN_REDIRECT_URL = "/"
 # # Login URL 

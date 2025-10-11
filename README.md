@@ -72,3 +72,63 @@ Python: v3.10+
 
 
 npm: v9+
+
+
+
+
+
+
+
+
+
+
+
+## starter comand  
+    docker exec -it postgres_db psql -U postgres -d postgres
+
+\l             -- list databases
+\c postgres    -- connect to a database
+\dt            -- list tables
+SELECT * FROM core_perimeter;  -- check data
+\q             -- quit psql
+
+
+2️⃣ Disconnect / exit psql
+
+Inside psql prompt, type:
+
+\q
+
+3️⃣ Stop / disconnect the Docker container (when you’re done)
+
+If you want to stop the PostgreSQL container completely:
+
+docker stop postgres_db
+
+
+Container stops but data persists because Docker keeps the volume.
+
+You can start it again later with:
+
+docker start postgres_db
+
+4️⃣ One-line connect & disconnect combo
+
+Connect:
+
+docker exec -it postgres_db psql -U postgres -d postgres
+
+
+Disconnect (exit psql):
+
+\q
+
+
+Stop container when done:
+
+docker stop postgres_db
+
+
+Start container again:
+
+docker start postgres_db

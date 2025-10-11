@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 from django.db.models import Sum
 from .models import Risk, Control, Asset, Audit, Domain, perimeter, User, UserGroup
+from django.db.models import Sum, Count, Case, When, IntegerField, Q
 
 from .serializers import PerimeterSerializer, RiskSerializer, ControlSerializer, AssetSerializer, AuditSerializer, DomainSerializer, UserSerializer, UserGroupSerializer
 
@@ -52,45 +53,58 @@ class UserGroupViewSet(viewsets.ModelViewSet):
 # --- Custom API for Dashboard Overview ---
 @api_view(['GET'])
 def dashboard_overview(request):
-    controls = Control.objects.all()
-    audits = Audit.objects.order_by('-last_status')  # use last_status instead of updated_at
-    risks = Risk.objects.all()
+    # --- Controls Aggregation (Single Query) ---
+    controls_agg = Control.objects.aggregate(
+        total=Count('id'),
+        active=Count('id', filter=Q(status="active")),
+        deprecated=Count('id', filter=Q(status="deprecated")),
+        todo=Count('id', filter=Q(status="todo")),
+        in_progress=Count('id', filter=Q(status="in progress")),
+        on_hold=Count('id', filter=Q(status="on hold")),
+        pending_p1=Count('id', filter=Q(priority="P1")),
+        missed_eta=Count('id', filter=Q(status="missed")),
+    )
 
+    # --- Latest 5 Audits ---
+    latest_audits = Audit.objects.order_by('-updated_at')[:5]
+    audits_data = [
+        {
+            "name": audit.name,
+            "notAssessed": audit.not_assessed,
+            "partial": audit.partial,
+            "nonCompliant": audit.non_compliant,
+            "compliant": audit.compliant,
+            "notApplicable": audit.not_applicable,
+        }
+        for audit in latest_audits
+    ]
+
+    # --- Risks Aggregation (Boolean fields converted to integers) ---
+    risks_agg = Risk.objects.aggregate(
+        assessments=Count('id'),
+        accepted=Sum(
+            Case(When(risk_accepted=True, then=1), default=0, output_field=IntegerField())
+        ),
+        scenarios=Sum(
+            Case(When(risk_scenarios=True, then=1), default=0, output_field=IntegerField())
+        ),
+        mapped_threats=Sum(
+            Case(When(risk_mapped_threats=True, then=1), default=0, output_field=IntegerField())
+        ),
+    )
+
+    # --- Dashboard Response ---
     data = {
-        "controls": {
-            "total": controls.count(),
-            "active": controls.filter(status="active").count(),
-            "deprecated": controls.filter(status="deprecated").count(),
-            "todo": controls.filter(status="todo").count(),
-            "in_progress": controls.filter(status="in progress").count(),
-            "on_hold": controls.filter(status="on hold").count(),
-            "pending_p1": controls.filter(priority="P1").count(),
-            "missed_eta": controls.filter(status="missed").count(),
-        },
-        "audits": [
-            {
-                "name": audit.name,
-                "notAssessed": audit.not_assessed,
-                "partial": audit.partial,
-                "nonCompliant": audit.non_compliant,
-                "compliant": audit.compliant,
-                "notApplicable": audit.not_applicable,
-            }
-            for audit in audits.order_by("-updated_at")[:5]
-        ],
+        "controls": controls_agg,
+        "audits": audits_data,
         "compliance": {
-            "frameworks": 4,
-            "active_audits": f"0/{audits.count()}",
-            "progress": "68%",
-            "non_compliant_items": 42,
-            "evidences": 5,
+            "frameworks": 4,  # static, adjust if needed
+            "active_audits": f"0/{Audit.objects.count()}",
+            "progress": "68%",  # static, adjust if needed
+            "non_compliant_items": 42,  # static, adjust if needed
+            "evidences": 5,  # static, adjust if needed
         },
-        "risks": {
-            "assessments": risks.count(),
-            "accepted": risks.aggregate(total=Sum("risk_accepted"))["total"] or 0,
-            "scenarios": risks.aggregate(total=Sum("risk_scenarios"))["total"] or 0,
-            "mapped_threats": risks.aggregate(total=Sum("risk_mapped_threats"))["total"] or 0,
-        },
+        "risks": risks_agg,
         "charts": {
             "current_risks": [
                 {"name": "High", "value": 3, "color": "#f87171"},
