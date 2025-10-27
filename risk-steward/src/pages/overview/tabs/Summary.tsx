@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from "react-router-dom";
 
@@ -50,12 +51,34 @@ const Summary = () => {
 
 
 
+    // useEffect(() => {
+    //     fetch("http://127.0.0.1:8000/api/dashboard/")
+    //         .then((res) => res.json())
+    //         .then((json) => setData(json))
+    //         .catch((err) => console.error(err));
+    // }, []);
+
+    // Dashboard data fetching and processing
+
     useEffect(() => {
         fetch("http://127.0.0.1:8000/api/dashboard/")
             .then((res) => res.json())
-            .then((json) => setData(json))
-            .catch((err) => console.error(err));
+            .then((json) => {
+                // 1️⃣ Save raw data for other use
+                setData(json);
+
+                // 2️⃣ Format assets data for chart
+                const formattedData = json.Assets.map((item) => ({
+                    name: item.name,
+                    value: item.bar,
+                }));
+
+                // 3️⃣ Save formatted data to another state (if you have one)
+                setAssets(formattedData);
+            })
+            .catch((err) => console.error("Error fetching data:", err));
     }, []);
+
 
 
 
@@ -113,18 +136,42 @@ const Summary = () => {
         )
         .map(([key, value]) => ({ subject: key.replace("_", " ").toUpperCase(), value }));
 
-    // Assets bar chart (if needed from audits)
-    const assetsData = data.audits.map((audit: any) => ({
-        name: audit.name,
-        type: audit.notAssessed ? "Not Assessed" : audit.partial ? "Partial" : "Other",
-    }));
+
+    // Audits data with stacked bar visualization
+    const auditsData = data.Assets.map((asset: any) => {
+        const value = asset.bar || 0;
+        return {
+            name: asset.name,
+            compliant: value,
+            notAssessed: 100 - value,
+            percentage: `${value}%`,
+        };
+    });
+
+    // Custom label to show percentage at the end of bars
+    const renderCustomLabel = (props: any) => {
+        const { x, y, width, height, value } = props;
+        if (value === 0) return null;
+        return (
+            <text
+                x={x + width + 5}
+                y={y + height / 2}
+                fill="hsl(var(--muted-foreground))"
+                textAnchor="start"
+                dominantBaseline="middle"
+                fontSize={12}
+            >
+                {value}%
+            </text>
+        );
+    };
 
     // Pie chart data for risks
-    const gaugeData = [
-        { name: "Low", value: data.charts.current_risks.find((r: any) => r.name === "Low")?.value || 0, color: "#4ade80" },
-        { name: "Medium", value: data.charts.current_risks.find((r: any) => r.name === "Medium")?.value || 0, color: "#facc15" },
-        { name: "High", value: data.charts.current_risks.find((r: any) => r.name === "High")?.value || 0, color: "#f87171" },
-    ];
+    // const gaugeData = [
+    //     { name: "Low", value: data.charts.current_risks.find((r: any) => r.name === "Low")?.value || 0, color: "#4ade80" },
+    //     { name: "Medium", value: data.charts.current_risks.find((r: any) => r.name === "Medium")?.value || 0, color: "#facc15" },
+    //     { name: "High", value: data.charts.current_risks.find((r: any) => r.name === "High")?.value || 0, color: "#f87171" },
+    // ];
 
 
     return (
@@ -163,21 +210,43 @@ const Summary = () => {
 
             {/* Middle Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="col-span-2">
+                <Card className="col-span-2 hover:shadow-md transition-shadow">
                     <CardHeader>
-                        <CardTitle>Assets Overview</CardTitle>
+                        <CardTitle>Recently Updated Audits</CardTitle>
+                        <div className="flex gap-4 text-xs mt-2">
+                            <span className="flex items-center gap-1">
+                                <span className="w-3 h-3 bg-chart-1 rounded"></span> Compliant
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <span className="w-3 h-3 bg-muted rounded"></span> Not assessed
+                            </span>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={200}>
-                            <BarChart data={assetsData} layout="vertical">
-                                <XAxis type="number" hide />
-                                <YAxis type="category" dataKey="name" />
-                                <Tooltip />
-                                <Bar dataKey="type" fill="#38bdf8" />
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={auditsData} layout="vertical" margin={{ right: 50 }}>
+                                <XAxis type="number" domain={[0, 100]} hide />
+                                <YAxis
+                                    type="category"
+                                    dataKey="name"
+                                    width={150}
+                                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: "hsl(var(--card))",
+                                        border: "1px solid hsl(var(--border))",
+                                        borderRadius: "0.5rem",
+                                    }}
+                                />
+                                <Bar dataKey="compliant" stackId="a" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} label={renderCustomLabel} />
+                                <Bar dataKey="notAssessed" stackId="a" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
+
+
 
                 <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mt-6 mb-6">
                     {complianceCards.map((card, i) => (
@@ -190,7 +259,7 @@ const Summary = () => {
                         </Card>
                     ))}
                 </div>
-            </div>
+            </div >
 
             {/* Gauges Section */}
             {/* Gauges Section */}

@@ -1,7 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import viewsets
-from django.db.models import Sum
 from .models import Risk, Control, Asset, Audit, Domain, perimeter, User, UserGroup
 from django.db.models import Sum, Count, Case, When, IntegerField, Q
 
@@ -65,18 +64,23 @@ def dashboard_overview(request):
         missed_eta=Count('id', filter=Q(status="missed")),
     )
 
-    # --- Latest 5 Audits ---
-    latest_audits = Audit.objects.order_by('-updated_at')[:5]
-    audits_data = [
+    # --- Latest 5 Assets ---
+    latest_Assets = Asset.objects.order_by('-updated_at')[:5]
+    Assets_data = [
         {
-            "name": audit.name,
-            "notAssessed": audit.not_assessed,
-            "partial": audit.partial,
-            "nonCompliant": audit.non_compliant,
-            "compliant": audit.compliant,
-            "notApplicable": audit.not_applicable,
+            # "name": audit.name,
+            # "notAssessed": audit.not_assessed,
+            # "partial": audit.partial,
+            # "nonCompliant": audit.non_compliant,
+            # "compliant": audit.compliant,
+            # "notApplicable": audit.not_applicable,
+            "id": Asset.id,
+            "name": Asset.name,
+            "description": Asset.description,
+            "critical": Asset.critical,
+            "bar": Asset.bar,
         }
-        for audit in latest_audits
+        for Asset in latest_Assets
     ]
 
     # --- Risks Aggregation (Boolean fields converted to integers) ---
@@ -96,7 +100,7 @@ def dashboard_overview(request):
     # --- Dashboard Response ---
     data = {
         "controls": controls_agg,
-        "audits": audits_data,
+        "Assets": Assets_data,
         "compliance": {
             "frameworks": 4,  # static, adjust if needed
             "active_audits": f"0/{Audit.objects.count()}",
@@ -120,8 +124,3 @@ def dashboard_overview(request):
     }
 
     return Response(data)
-
-
-
-# organization 
-# @api_view(['Get'])

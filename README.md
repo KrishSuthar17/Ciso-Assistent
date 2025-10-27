@@ -83,7 +83,7 @@ npm: v9+
 
 
 
-## starter comand  
+## starter comand power shell/cmd
     docker exec -it postgres_db psql -U postgres -d postgres
 
 \l             -- list databases

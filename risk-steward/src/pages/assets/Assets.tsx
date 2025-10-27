@@ -4,17 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -125,8 +125,8 @@ export default function Assets() {
 
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.location.toLowerCase().includes(searchTerm.toLowerCase());
+      asset.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === "all" || asset.type === typeFilter;
     return matchesSearch && matchesType;
   });
@@ -221,7 +221,7 @@ export default function Assets() {
             <div className="text-2xl font-bold">127</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Critical Assets</CardTitle>
@@ -231,7 +231,7 @@ export default function Assets() {
             <div className="text-2xl font-bold">23</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">High Risk</CardTitle>
@@ -241,7 +241,7 @@ export default function Assets() {
             <div className="text-2xl font-bold">8</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Risk Score</CardTitle>

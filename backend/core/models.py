@@ -13,12 +13,15 @@ class Risk(models.Model):
     risk_accepted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.risk_assessments
+
 
 class Control(models.Model):
     name = models.CharField(max_length=255, blank=True, null=True)
     category = models.CharField(max_length=255, blank=True, null=True)
 
-    # 👇 Add a safe default for status
+    # Add a safe default for status
     status = models.CharField(
         max_length=50,
         choices=[
@@ -29,7 +32,7 @@ class Control(models.Model):
             ("on hold", "On Hold"),
             ("missed", "Missed ETA"),
         ],
-        default="todo"  # ✅ Default so migration won’t get stuck
+        default="todo"  # Default so migration won’t get stuck
     )
 
     priority = models.CharField(
@@ -48,7 +51,10 @@ class Control(models.Model):
 class Asset(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    critical = models.BooleanField(default=False)  # make sure this line exists
+    critical = models.BooleanField(default=False)  
+    bar = models.IntegerField(default=0, max_length=100)  # Progress percentage
+    created_at = models.DateTimeField(auto_now_add=True)  # auto set on creation
+    updated_at = models.DateTimeField(auto_now=True)      # auto set on every update
 
     def __str__(self):
         return self.name
@@ -120,7 +126,6 @@ class perimeter(models.Model):
         ('Dropped','Dropped')
         ])
                         
-    # default_asigned = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='default_perimeter')
     default_asigned = models.ForeignKey(
     'core.User',   # <-- string reference with app name
     on_delete=models.SET_NULL,
